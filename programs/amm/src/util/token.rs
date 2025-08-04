@@ -464,9 +464,19 @@ pub fn create_token_vault_account<'info>(
 pub fn is_superstate_token(mint_account: &InterfaceAccount<Mint>) -> bool {
     if let COption::Some(freeze_authority) = mint_account.freeze_authority {
         let mint_account_info = mint_account.to_account_info();
-        let mint_data = mint_account_info.try_borrow_data().unwrap();
-        let mint_state =
-            StateWithExtensions::<spl_token_2022::state::Mint>::unpack(&mint_data).unwrap();
+        
+        // Safe error handling - return false if borrowing fails
+        let mint_data = match mint_account_info.try_borrow_data() {
+            Ok(data) => data,
+            Err(_) => return false,
+        };
+        
+        // Safe error handling - return false if unpacking fails
+        let mint_state = match StateWithExtensions::<spl_token_2022::state::Mint>::unpack(&mint_data) {
+            Ok(state) => state,
+            Err(_) => return false,
+        };
+        
         let default_account_state_freeze =
             if let Ok(default_account_state) = mint_state.get_extension::<DefaultAccountState>() {
                 default_account_state.state == (AccountState::Frozen as u8)

@@ -3613,8 +3613,12 @@ dependencies = [
  "proptest",
  "quickcheck",
  "rand 0.8.5",
+ "solana-program-test",
+ "solana-sdk",
  "solana-security-txt",
+ "spl-token 7.0.0",
  "spl-token-2022 7.0.0",
+ "tokio",
  "uint",
 ]
 

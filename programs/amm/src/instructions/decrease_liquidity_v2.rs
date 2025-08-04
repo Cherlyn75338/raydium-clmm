@@ -25,8 +25,18 @@ pub struct DecreaseLiquidityV2<'info> {
     #[account(mut)]
     pub pool_state: AccountLoader<'info, PoolState>,
 
-    /// CHECK: Deprecated: protocol_position is deprecated and kept for compatibility.
-    pub protocol_position: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        seeds = [
+            POSITION_SEED.as_bytes(),
+            pool_state.key().as_ref(),
+            &personal_position.tick_lower_index.to_be_bytes(),
+            &personal_position.tick_upper_index.to_be_bytes(),
+        ],
+        bump,
+        constraint = protocol_position.pool_id == pool_state.key(),
+    )]
+    pub protocol_position: Box<Account<'info, ProtocolPositionState>>,
 
     /// Token_0 vault
     #[account(
@@ -106,6 +116,7 @@ pub fn decrease_liquidity_v2<'a, 'b, 'c: 'info, 'info>(
 ) -> Result<()> {
     decrease_liquidity(
         &ctx.accounts.pool_state,
+        &mut ctx.accounts.protocol_position,
         &mut ctx.accounts.personal_position,
         &ctx.accounts.token_vault_0.to_account_info(),
         &ctx.accounts.token_vault_1.to_account_info(),

@@ -4,7 +4,7 @@ use {
     raydium_amm_v3,
     solana_program_test::*,
     solana_sdk::{
-        account::Account,
+        account::Account as SolanaAccount,
         program_pack::Pack,
         signature::{Keypair, Signer},
     },
@@ -88,17 +88,17 @@ pub fn setup(
     tick_spacing: u16,
     trade_fee_rate: u32,
 ) -> SetUpInfo {
-    // Add metadata program
+    // Add metadata program (commented out for POC)
     program_test.prefer_bpf(true);
-    program_test.add_program(
-        "mpl_metadata",
-        Pubkey::from_str("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").unwrap(),
-        None,
-    );
+    // program_test.add_program(
+    //     "mpl_metadata",
+    //     Pubkey::from_str("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").unwrap(),
+    //     None,
+    // );
     // Get SOL for wallet
     program_test.add_account(
         *wallet_address,
-        Account {
+        SolanaAccount {
             lamports: 1_000_000_000 * 100,
             data: vec![],
             owner: anchor_lang::system_program::ID,
@@ -127,7 +127,7 @@ pub fn setup(
     amm_config.try_serialize(&mut amm_config_data).unwrap();
     program_test.add_account(
         amm_config_key,
-        Account {
+        SolanaAccount {
             lamports: 1705200,
             data: amm_config_data,
             owner: raydium_amm_v3::id(),
@@ -149,7 +149,7 @@ pub fn setup(
     anchor_spl::token::spl_token::state::Mint::pack_into_slice(&mint0, &mut mint0_data);
     program_test.add_account(
         mint0_keypair.pubkey(),
-        Account {
+        SolanaAccount {
             lamports: 399269547297,
             data: mint0_data,
             owner: anchor_spl::token::spl_token::id(),
@@ -170,7 +170,7 @@ pub fn setup(
     anchor_spl::token::spl_token::state::Mint::pack_into_slice(&mint1, &mut mint1_data);
     program_test.add_account(
         mint1_keypair.pubkey(),
-        Account {
+        SolanaAccount {
             lamports: 399269547297,
             data: mint1_data,
             owner: anchor_spl::token::spl_token::id(),
@@ -195,7 +195,7 @@ pub fn setup(
     anchor_spl::token::spl_token::state::Account::pack_into_slice(&token0, &mut token0_data);
     program_test.add_account(
         token0_ata,
-        Account {
+        SolanaAccount {
             lamports: 399269547297,
             data: token0_data,
             owner: anchor_spl::token::spl_token::id(),
@@ -220,7 +220,7 @@ pub fn setup(
     anchor_spl::token::spl_token::state::Account::pack_into_slice(&token1, &mut token1_data);
     program_test.add_account(
         token1_ata,
-        Account {
+        SolanaAccount {
             lamports: 399269547297,
             data: token1_data,
             owner: anchor_spl::token::spl_token::id(),
@@ -334,10 +334,10 @@ pub fn open_position_ix(
     let (metadata_account, _bump) = Pubkey::find_program_address(
         &[
             PREFIX,
-            metadata::ID.to_bytes().as_ref(),
+            Pubkey::from_str("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").unwrap().to_bytes().as_ref(),
             position_nft_mint.to_bytes().as_ref(),
         ],
-        &metadata::ID,
+        &Pubkey::from_str("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").unwrap(),
     );
     let (protocol_position, __bump) = Pubkey::find_program_address(
         &[
@@ -375,7 +375,7 @@ pub fn open_position_ix(
         system_program: anchor_lang::system_program::ID,
         token_program: anchor_spl::token::spl_token::id(),
         associated_token_program: anchor_spl::associated_token::ID,
-        metadata_program: metadata::ID,
+        metadata_program: Pubkey::from_str("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").unwrap(),
         token_program_2022: spl_token_2022::id(),
         vault_0_mint: setup_account.mint0,
         vault_1_mint: setup_account.mint1,
@@ -396,7 +396,7 @@ pub fn open_position_ix(
             tick_array_upper_start_index,
             amount_0_max: 1_000_000_000000,
             amount_1_max: 1_000_000_000000,
-            with_metadata: false,
+            with_metadata: false, // Don't create metadata
             base_flag: None,
         }
         .data(),
